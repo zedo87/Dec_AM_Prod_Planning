@@ -1,1 +1,4 @@
 /01_Programming/venv/
+.idea/
+01_Programming/.idea/
+01_Programming/__pycache__/
