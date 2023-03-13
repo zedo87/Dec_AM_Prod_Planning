@@ -14,4 +14,7 @@ class Destroy(OPSelection):
         for i in range(number_of_items_to_delete):
             pass
 
+    def destroy(self):
+
+
 
