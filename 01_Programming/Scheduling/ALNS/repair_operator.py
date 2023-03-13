@@ -1,9 +1,9 @@
 from operator_selection import OPSelection
 import random as rd
 
-class Repair(OPSelection):
+class Repair:
     def __init__(self):
-        OPSelection.__init__([self.random_insertion, self.greedy_insertion])
+        self.repair_operator_selection = OPSelection([self.random_insertion, self.greedy_insertion])
         self.removed_parts_p = None
         self.pi = None
         self.seed = None
@@ -20,6 +20,9 @@ class Repair(OPSelection):
         pass
 
     def repair(self):
+        operator = self.destroy_operator_selection.select_operator_acc_rd_number()
+        operator()
+
 
 
 

@@ -7,7 +7,8 @@ class ALNS_material(Destroy, Repair, Acceptance):
     def __init__(self):
 
 
-        destroy_operator = OPSelection()
+        destroy_operators = OPSelection()
+        repair_operators = OPSelection()
 
         self.removed_parts_p = None
         self.pi = None
@@ -20,9 +21,11 @@ class ALNS_material(Destroy, Repair, Acceptance):
         while not acceptance_criterion:
             self.destroy()
             self.repair()
+            self.fast_pack_solve
             acceptance_criterion = self.acceptance_criterion_fulfilled()
 
 
+    def check_termination_criterion(self):
 
 
 
