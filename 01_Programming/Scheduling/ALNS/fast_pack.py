@@ -1,18 +1,16 @@
-import random as rd
 import pandas as pd
 
 class FastPack:
-    def __init__(self):
-        self.vars = None
-        self.params = None
-        self.pi = None
+    def __init__(self, params, variables):
+        self.vars = variables
+        self.params = params
 
-    def fast_packing(self):
+    def fast_packing(self, pi):
         """
         :param pi: permutation of part list
         :return: a batching configuration F_jp
         """
-        for part_id in self.pi:
+        for part_id in pi.copy():
             for O in self.vars.df_O.df_iterrows():
                 sr_O = O[1]
                 feasible = self.check_if_part_feasible(part_id, sr_O)
@@ -172,8 +170,9 @@ class FastPack:
                               'y': 0})
         self.vars.df_O = pd.concat([self.vars.df_O, sr_new_O.to_frame().T], ignore_index=True)
 
-    def create_permutation_of_parts(self, seed):
+    """
+    def create_random_permutation_of_parts(self, seed):
         rd.seed(seed)
         self.vars.pi = list(self.params.P).copy()
         rd.shuffle(self.vars.pi)
-
+    """

@@ -5,7 +5,7 @@ class Costs:
         self.PROD = 0
         self.SET = 0
         self.INV = 0
-        self.TOTAL = 0
+        self.total_costs = 0
 
     def compute_inventory_costs(self):
         pass
