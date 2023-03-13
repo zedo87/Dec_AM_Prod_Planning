@@ -3,10 +3,10 @@ from scheduling import Scheduling
 from Scheduling.costs import CostsMachine
 from model import ModelMachineALNS
 
-class SolvePermutation(ModelMachineALNS, FastPack, Scheduling, CostsMachine):
+class SolvePermutation(FastPack, Scheduling, CostsMachine):
     def __init__(self, input_dfs):
-        ModelMachineALNS.__init__(self, input_dfs)
-        self.pi = None
+        self.model = ModelMachineALNS(input_dfs)
+        self.solver_successful = True
 
     def solve_permutation(self, pi):
         self.fast_packing(pi)

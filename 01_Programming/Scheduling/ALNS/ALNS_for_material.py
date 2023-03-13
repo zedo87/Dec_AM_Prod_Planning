@@ -50,10 +50,10 @@ class ALNS_material(Destroy, Repair, Acceptance):
 
     def create_inital_solution(self):
         rd.seed(self.seed)
-        pi = list(self.plan_permutation.params.P).copy()
-        rd.shuffle(self.vars.pi)
+        self.pi = list(self.plan_permutation.model.params.P).copy()
+        rd.shuffle(self.pi)
         self.seed += 1
-        self.plan_permutation(pi)
+        self.plan_permutation.solve_permutation(self.pi)
 
 
 

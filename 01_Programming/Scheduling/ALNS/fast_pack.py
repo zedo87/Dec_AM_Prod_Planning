@@ -10,8 +10,9 @@ class FastPack:
         :param pi: permutation of part list
         :return: a batching configuration F_jp
         """
+        self.open_new_batch()
         for part_id in pi.copy():
-            for O in self.vars.df_O.df_iterrows():
+            for O in self.vars.df_O.iterrows():
                 sr_O = O[1]
                 feasible = self.check_if_part_feasible(part_id, sr_O)
                 if feasible:
@@ -30,10 +31,12 @@ class FastPack:
         :return:
         """
         keys = self.vars.F_jp.keys()
-        j_s = list(zip(*keys))[0]
-        p_s = list(zip(*keys))[1]
-        indices_j = [index for index, value in enumerate(j_s) if value == j]
-        P_j = set([p_s[index] for index in indices_j])
+        if len(keys) > 0:
+            j_s = list(zip(*keys))[0]
+            p_s = list(zip(*keys))[1]
+            indices_j = [index for index, value in enumerate(j_s) if value == j]
+            P_j = set([p_s[index] for index in indices_j])
+        else: P_j = {}
         return P_j
 
     def check_batch_feasible(self, j):
@@ -71,12 +74,12 @@ class FastPack:
         P_j = self.get_parts_of_batch(j)
         feasible = True
         for p_prime in P_j:
-            w_f_pc = round((self.vars.x_p[p] + self.params.f_p[p]), 1) <= round(self.params.f_pc, 1)
-            w_g_pc = round((self.vars.y_p[p] + self.params.g_p[p]), 1) <= round(self.params.g_pc, 1)
-            w_pp_1 = round((self.vars.x_p[p] + self.params.f_p[p]), 1) <= round(self.vars.x_p[p_prime], 1)
-            w_pp_2 = round((self.vars.x_p[p_prime] + self.params.f_p[p_prime]), 1) <= round(self.vars.x_p[p], 1)
-            w_pp_3 = round((self.vars.y_p[p] + self.params.g_p[p]), 1) <= round(self.vars.y_p[p_prime], 1)
-            w_pp_4 = round((self.vars.y_p[p_prime] + self.params.g_p[p_prime]), 1) <= round(self.vars.y_p[p], 1)
+            w_f_pc = round((sr_O['x'] + self.params.f_p[p]), 1) <= round(self.params.f_pc, 1)
+            w_g_pc = round((sr_O['y'] + self.params.g_p[p]), 1) <= round(self.params.g_pc, 1)
+            w_pp_1 = round((sr_O['x'] + self.params.f_p[p]), 1) <= round(self.vars.x_p[p_prime], 1)
+            w_pp_2 = round((self.vars.x_p[p_prime] + self.params.f_p[p_prime]), 1) <= round(sr_O['x'], 1)
+            w_pp_3 = round((sr_O['y'] + self.params.g_p[p]), 1) <= round(self.vars.y_p[p_prime], 1)
+            w_pp_4 = round((self.vars.y_p[p_prime] + self.params.g_p[p_prime]), 1) <= round(sr_O['y'], 1)
             feasible = w_f_pc and w_g_pc and (w_pp_1 or w_pp_2 or w_pp_3 or w_pp_4)
             if not feasible: break
         return feasible
@@ -113,17 +116,17 @@ class FastPack:
         :return:
         """
         j = old_sr_O['j']
-        O_new_1 = pd.Series({'x': (old_sr_O['x'] + self.params.x_p[p]),
+        O_new_1 = pd.Series({'x': (old_sr_O['x'] + self.params.g_p[p]),
                              'y': old_sr_O['y'],
                              'j': j})
         if self.check_corner_point_feasible(O_new_1):
-            self.vars.df_O[j] = pd.concat([self.vars.df_O[j], O_new_1.to_frame().T], ignore_index=True)
+            self.vars.df_O = pd.concat([self.vars.df_O, O_new_1.to_frame().T], ignore_index=True)
 
         O_new_2 = pd.Series({'x': old_sr_O['x'],
-                             'y': (old_sr_O['y'] + + self.params.y_p[p]),
+                             'y': (old_sr_O['y'] + + self.params.f_p[p]),
                              'j': j})
         if self.check_corner_point_feasible(O_new_2):
-            self.vars.df_O[j] = pd.concat([self.vars.df_O[j], O_new_2.to_frame().T], ignore_index=True)
+            self.vars.df_O = pd.concat([self.vars.df_O, O_new_2.to_frame().T], ignore_index=True)
 
     def place_part_in_batch(self, p, sr_O):
         """
@@ -136,16 +139,15 @@ class FastPack:
         """
         j = sr_O['j']
         self.vars.F_jp[(j, p)] = 1
-        self.vars.x_p = sr_O['x']
-        self.vars.y_p = sr_O['y']
+        self.vars.x_p[p] = sr_O['x']
+        self.vars.y_p[p] = sr_O['y']
         self.vars.Y_jj[(j, j + 1)] = 1
 
     def sort_df_O(self):
-        self.vars.df_O_j = self.vars.df_O_j.sort_values(['j', 'y', 'x'])
+        self.vars.df_O = self.vars.df_O.sort_values(['j', 'y', 'x'])
 
     def drop_corner_point_O(self, sr_O):
-        dropped = self.vars.df_O.drop(self.vars.df_O[self.vars.df_O[['j', 'x', 'y']] == sr_O].index, inplace=True)
-        assert dropped is True
+        self.vars.df_O.drop(self.vars.df_O[self.vars.df_O[['j', 'x', 'y']] == sr_O].index, inplace=True)
 
     def open_batch_if_new_batch_required(self):
         """
@@ -163,12 +165,15 @@ class FastPack:
         appends a row to df_O, with the next batch, and a new corner point at the origin, at x=0, y=0
         :return:
         """
-        highest_j = self.vars.df_O['j'].max()
-        new_j = highest_j + 1
+        if len(self.model.vars.df_O) > 0:
+            highest_j = self.vars.df_O['j'].max()
+            new_j = highest_j + 1
+        else:
+            new_j = 1
         sr_new_O = pd.Series({'j': new_j,
                               'x': 0,
                               'y': 0})
-        self.vars.df_O = pd.concat([self.vars.df_O, sr_new_O.to_frame().T], ignore_index=True)
+        self.model.vars.df_O = pd.concat([self.model.vars.df_O, sr_new_O.to_frame().T], ignore_index=True)
 
     """
     def create_random_permutation_of_parts(self, seed):
