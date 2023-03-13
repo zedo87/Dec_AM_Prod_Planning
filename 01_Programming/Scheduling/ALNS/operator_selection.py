@@ -1,8 +1,9 @@
 import numpy as np
+from Scheduling.ALNS.acceptance_criterion import Acceptance
 import random
 
 
-class OPSelection:
+class OPSelection(Acceptance):
     def __init__(self, operators):
         """
         i... index of operators
@@ -17,9 +18,6 @@ class OPSelection:
         self.u_i = np.full(len(operators), 0)
         self.beta_i = np.full(len(operators), 0)
         self.rho = 0.5
-        beta_lower = 0.0
-        beta_higher = 0.0
-        beta_accept = 0.0
 
     def update_weighing(self):
         pass
